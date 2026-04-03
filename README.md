@@ -5,11 +5,24 @@
 - v1 : 출시 후 서비스 종료
 - v2 : 개선 및 차기작(미출시)
 
-## 핵심 구현
+## v1 핵심 구현
 
 ### SO 이벤트 채널
+의존성 필요한 모든 클래스에 이벤트 채널을 사용
+[ScoreManager.cs](v1/Stage/Score/ScoreManager.cs), [GameOverSystem.cs](v1/Stage/GameOver/GameOverSystem.cs) 등
 
-[ScoreManager.cs](v1/Stage/Score/ScoreManager.cs), [GameOverSystem.cs](v1/Stage/GameOver/GameOverSystem.cs)과 같이 의존성 필요한 클래스에 이벤트 채널을 사용하여 구현
+---
+
+## v2 핵심 구현
+### 아키텍처 개선
+
+코드의 흐름이 명확해지고 필요한 책임만 져서 간결해짐
+
+| v1 | v2 |
+|----|----|
+| [ScoreManager.cs](v1/Stage/Score/ScoreManager.cs) | [ScoreSystem.cs](v2/Gameplay/Puzzle/Score/ScoreSystem.cs) |
+| | [ScoreModel.cs](v2/Gameplay/Puzzle/Score/ScoreModel.cs) |
+| | [ScoreVisualizer.cs](v2/Gameplay/Puzzle/Score/ScoreVisualizer.cs) |
 
 ---
 
