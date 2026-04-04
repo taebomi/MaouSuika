@@ -1,9 +1,14 @@
 # 마왕 수박 게임
-
 > 써드파티 에셋 라이센스로 인해 전체 프로젝트가 아닌 C# 스크립트만 포함
+
+> 수박 게임 류 | Unity | 1인 개발 | 안드로이드 | 출시
 
 - v1 : 출시 후 서비스 종료
 - v2 : 개선 및 차기작(미출시)
+
+### 트레일러
+[![트레일러](https://i9.ytimg.com/vi_webp/L1Ubq69U_OY/mqdefault.webp?v=6639077b&sqp=CIyWxs4G&rs=AOn4CLChaSKVkkZhtPTtLqW0hl9AjcZu2g)](https://www.youtube.com/watch?v=L1Ubq69U_OY)
+
 
 ## v1 핵심 구현
 
@@ -14,18 +19,6 @@
 ---
 
 ## v2 핵심 구현
-### 아키텍처 개선
-
-코드의 흐름이 명확해지고 필요한 책임만 져서 간결해짐
-
-| v1 | v2 |
-|----|----|
-| [ScoreManager.cs](v1/Stage/Score/ScoreManager.cs) | [ScoreSystem.cs](v2/Gameplay/Puzzle/Score/ScoreSystem.cs) |
-| | [ScoreModel.cs](v2/Gameplay/Puzzle/Score/ScoreModel.cs) |
-| | [ScoreVisualizer.cs](v2/Gameplay/Puzzle/Score/ScoreVisualizer.cs) |
-
----
-
 ### 전략 패턴 입력 시스템
 
 ```mermaid
@@ -59,3 +52,53 @@ flowchart TD
 | [ShooterDirectStrategy.cs](v2/Gameplay/Puzzle/Shooter/Input/Strategy/ShooterDirectStrategy.cs) | 다이렉트 입력 전략 |
 | [ShooterVirtualCursorStrategy.cs](v2/Gameplay/Puzzle/Shooter/Input/Strategy/ShooterVirtualCursorStrategy.cs) | 가상 커서 입력 전략 |
 | [ShooterNoneStrategy.cs](v2/Gameplay/Puzzle/Shooter/Input/Strategy/ShooterNoneStrategy.cs) | None 전략 (입력 비활성화) |
+
+### 아키텍처 개선
+
+코드의 흐름이 명확해지고 필요한 책임만 져서 간결해짐
+
+| v1 | v2 |
+|----|----|
+| [ScoreManager.cs](v1/Stage/Score/ScoreManager.cs) | [ScoreSystem.cs](v2/Gameplay/Puzzle/Score/ScoreSystem.cs) |
+| | [ScoreModel.cs](v2/Gameplay/Puzzle/Score/ScoreModel.cs) |
+| | [ScoreVisualizer.cs](v2/Gameplay/Puzzle/Score/ScoreVisualizer.cs) |
+
+
+### 빌더 패턴
+
+[PuzzleContext.cs](v2/Gameplay/Puzzle/PuzzleContext.cs) - 파라미터 길어짐 방지, 필수 값 강제
+
+---
+
+## 핵심 코드 구조
+
+### v1
+
+```
+v1/
+├── SO/                        # ScriptableObject 기반 이벤트/변수 채널
+│   ├── 01_Variable/           # 변수 SO (Int, Float, Bool 등)
+│   ├── 02_Data/               # 데이터 SO
+│   └── 03_Event/              # 이벤트 채널 SO
+├── Stage/                     # 게임 플레이
+│   ├── Gashapon/              # 수박 오브젝트 (발사, 합체, 큐)
+│   ├── Combo/                 # 콤보 시스템
+│   ├── Score/                 # 점수
+│   ├── Battle/                # 배틀
+│   ├── Overlord/              # 마왕 반응형 대사
+│   └── GameOver/              # 게임오버
+└── System/                    # 공통 시스템 (Audio, UI, Scene 등)
+```
+
+### v2
+
+```
+v2/
+└── Gameplay/                  # 게임 특화 로직
+    └── Puzzle/
+        ├── Input/             # 입력 시스템 ★
+        ├── Shooter/           # 슈터 (전략 패턴) ★
+        └── Score/             # 점수 (Model-View 분리)
+```
+
+
