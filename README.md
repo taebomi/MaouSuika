@@ -13,13 +13,42 @@
 ## v1 핵심 구현
 
 ### SO 이벤트 채널
-의존성 필요한 모든 클래스에 이벤트 채널을 사용
-[ScoreManager.cs](v1/Stage/Score/ScoreManager.cs), [GameOverSystem.cs](v1/Stage/GameOver/GameOverSystem.cs) 등
+
+ScriptableObject를 이벤트 채널로 사용해 씬 계층 간 의존 없이 통신하는 구조.
+`capsuleMergedEventSO`, `stageEndEvent` 등 SO를 Inspector에서 주입받아 구독합니다.
+
+| 파일 | 역할 |
+|------|------|
+| [ScoreManager.cs](v1/Stage/Score/ScoreManager.cs) | 합체 이벤트 구독 → 점수 계산 → 점수 획득 이벤트 발행 |
+| [GameOverSystem.cs](v1/Stage/GameOver/GameOverSystem.cs) | 게임오버 조건 감지 및 이벤트 발행 |
+
+```csharp
+// ScoreManager.cs
+private void Awake()
+{
+    capsuleMergedEventSO.OnEventRaised += OnCapsuleMerged; // SO 이벤트 구독
+    curComboVarSO.OnValueChanged += OnComboChanged;
+    stageEndEvent.OnEventRaised += OnStageEnded;
+}
+
+private void OnCapsuleMerged(int level)
+{
+    var getScore = (int)(gashaponScoreDataSO.value[level] * _scoreMultiplier);
+    curScore += getScore;
+    scoreGetEventSO.RaiseEvent(getScore); // 점수 획득 이벤트 발행
+}
+```
+
+씬 구조나 실행 순서와 무관하게 연결되는 점은 장점이지만, 변경 가능성이 낮은 영역까지 이벤트 채널을 도입해 간접 계층이 과도하게 늘어난 부분도 있었습니다.
 
 ---
 
 ## v2 핵심 구현
+
 ### 전략 패턴 입력 시스템
+
+입력 방식(드래그/클래식/다이렉트 등)을 `Dictionary`로 관리해 런타임에 교체합니다.
+새 입력 방식 추가 시 `IShooterInputStrategy`를 구현하고 Dictionary에 등록하면 됩니다.
 
 ```mermaid
 flowchart TD
@@ -53,9 +82,38 @@ flowchart TD
 | [ShooterVirtualCursorStrategy.cs](v2/Gameplay/Puzzle/Shooter/Input/Strategy/ShooterVirtualCursorStrategy.cs) | 가상 커서 입력 전략 |
 | [ShooterNoneStrategy.cs](v2/Gameplay/Puzzle/Shooter/Input/Strategy/ShooterNoneStrategy.cs) | None 전략 (입력 비활성화) |
 
+```csharp
+// ShooterInputModule.cs
+_strategies = new Dictionary<ShooterInputType, IShooterInputStrategy>()
+{
+    { ShooterInputType.None,          new ShooterNoneStrategy() },
+    { ShooterInputType.Drag,          new ShooterDragStrategy(area) },
+    { ShooterInputType.Classic,       new ShooterClassicStrategy() },
+    { ShooterInputType.Direct,        new ShooterDirectStrategy() },
+    { ShooterInputType.VirtualCursor, new ShooterVirtualCursorStrategy() },
+};
+
+private void SwitchStrategy(ShooterInputType type)
+{
+    if (_curStrategy.InputType == type) return;
+    _curStrategy.Exit();
+    _curStrategy = _strategies[type];
+    _curStrategy.Enter();
+}
+```
+
 ### 아키텍처 개선
 
-코드의 흐름이 명확해지고 필요한 책임만 져서 간결해짐
+v1의 `ScoreManager`는 데이터·계산·표시를 모두 떠안았지만, v2에서는 Model(계산)·View(표시)·System(조율)으로 분리했습니다.
+
+```csharp
+// v2 ScoreSystem.cs — 계산은 Model, 표시는 Visualizer로 위임
+public void HandleSuikaMerged(MergeEvent mergeEvent)
+{
+    visualizer.UpdateMainScore(_scoreModel.CurrentScore);
+    ScoreChanged?.Invoke(_scoreModel.CurrentScore);
+}
+```
 
 | v1 | v2 |
 |----|----|
@@ -66,7 +124,31 @@ flowchart TD
 
 ### 빌더 패턴
 
-[PuzzleContext.cs](v2/Gameplay/Puzzle/PuzzleContext.cs) - 파라미터 길어짐 방지, 필수 값 강제
+생성자 파라미터가 길어지는 것을 막고, `Build()` 시점에 필수 값 누락을 강제합니다.
+
+```csharp
+// PuzzleContext.cs
+public PuzzleContext Build()
+{
+    if (_playerContext == null) throw new InvalidOperationException($"{nameof(_playerContext)} is null.");
+    if (_tierConfig == null)    throw new InvalidOperationException($"{nameof(_tierConfig)} is null.");
+    if (_area == null)          throw new InvalidOperationException($"{nameof(_area)} is null.");
+
+    return new PuzzleContext
+    {
+        PlayerContext = _playerContext,
+        Area = _area,
+        TierDataTable = new SuikaTierDataTable(SuikaTierDataBuilder.Build(_tierConfig, _playerContext.MonsterLoadout))
+    };
+}
+
+// 사용처
+var context = new PuzzleContext.Builder()
+    .SetPlayerContext(playerContext)
+    .SetTierConfig(tierConfig)
+    .SetArea(area)
+    .Build();
+```
 
 ---
 
