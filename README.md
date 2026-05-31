@@ -7,7 +7,7 @@
 - v2 : 개선 및 차기작(미출시)
 
 ### 트레일러
-[![트레일러](https://i9.ytimg.com/vi_webp/L1Ubq69U_OY/mqdefault.webp?v=6639077b&sqp=CIyWxs4G&rs=AOn4CLChaSKVkkZhtPTtLqW0hl9AjcZu2g)](https://www.youtube.com/watch?v=L1Ubq69U_OY)
+[![트레일러](https://img.youtube.com/vi/L1Ubq69U_OY/0.jpg)](https://www.youtube.com/watch?v=L1Ubq69U_OY)
 
 
 ## v1 핵심 구현
